@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useApkBuilderStore } from '@/stores/apkBuilderStore';
 import { getDefaultModel, testApiKey } from '@/lib/aiClient';
-import { Bot, CheckCircle, Loader2, XCircle } from 'lucide-react';
+import { fetchModels } from '@/lib/aiModels';
+import { Bot, CheckCircle, Loader2, XCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AIProvider } from '@/types/apk-builder';
 
@@ -20,6 +21,8 @@ const PROVIDERS: { value: AIProvider; label: string; free?: boolean }[] = [
   { value: 'custom', label: 'Personnalisé (OpenAI-compatible)' },
 ];
 
+interface ModelInfo { id: string; name: string; }
+
 const AISettings = () => {
   const { aiConfig, setAiConfig } = useApkBuilderStore();
   const [provider, setProvider] = useState<AIProvider>(aiConfig?.provider || 'gemini');
@@ -28,11 +31,41 @@ const AISettings = () => {
   const [baseUrl, setBaseUrl] = useState(aiConfig?.baseUrl || '');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<boolean | null>(null);
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+
+  // Load models when API key changes and is valid
+  const loadModels = async () => {
+    if (!apiKey) return;
+    setLoadingModels(true);
+    const result = await fetchModels(provider, apiKey);
+    setModels(result);
+    setLoadingModels(false);
+  };
+
+  useEffect(() => {
+    if (apiKey && apiKey.length > 10) {
+      const timer = setTimeout(loadModels, 500);
+      return () => clearTimeout(timer);
+    }
+    setModels([]);
+  }, [apiKey, provider]);
+
+  // Sync from store when it changes
+  useEffect(() => {
+    if (aiConfig) {
+      setProvider(aiConfig.provider);
+      setApiKey(aiConfig.apiKey);
+      setModel(aiConfig.model || '');
+      setBaseUrl(aiConfig.baseUrl || '');
+    }
+  }, [aiConfig]);
 
   const handleProviderChange = (v: AIProvider) => {
     setProvider(v);
     setModel(getDefaultModel(v));
     setTestResult(null);
+    setModels([]);
   };
 
   const handleTest = async () => {
@@ -58,7 +91,7 @@ const AISettings = () => {
           <Bot className="h-5 w-5 text-primary" /> Assistant IA
         </CardTitle>
         <CardDescription>
-          Configurez un fournisseur d'IA pour analyser les erreurs de build et obtenir de l'aide.
+          Configurez un fournisseur d'IA pour analyser les erreurs et obtenir de l'aide.
           Les clés API restent dans votre navigateur.
         </CardDescription>
       </CardHeader>
@@ -88,12 +121,36 @@ const AISettings = () => {
         </div>
 
         <div className="space-y-2">
-          <Label>Modèle (optionnel)</Label>
-          <Input
-            placeholder={getDefaultModel(provider)}
-            value={model}
-            onChange={e => setModel(e.target.value)}
-          />
+          <Label className="flex items-center gap-2">
+            Modèle
+            {loadingModels && <Loader2 className="h-3 w-3 animate-spin" />}
+            {models.length > 0 && !loadingModels && (
+              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={loadModels}>
+                <RefreshCw className="h-3 w-3" />
+              </Button>
+            )}
+          </Label>
+          {models.length > 0 ? (
+            <Select value={model} onValueChange={setModel}>
+              <SelectTrigger><SelectValue placeholder={getDefaultModel(provider)} /></SelectTrigger>
+              <SelectContent className="max-h-60">
+                {models.map(m => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              placeholder={getDefaultModel(provider)}
+              value={model}
+              onChange={e => setModel(e.target.value)}
+            />
+          )}
+          {models.length > 0 && (
+            <p className="text-[10px] text-muted-foreground">{models.length} modèles disponibles</p>
+          )}
         </div>
 
         {provider === 'custom' && (
@@ -110,7 +167,7 @@ const AISettings = () => {
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleTest} disabled={!apiKey || testing}>
             {testing ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-            Tester la clé
+            Tester
           </Button>
           {testResult !== null && (
             testResult
@@ -120,7 +177,7 @@ const AISettings = () => {
         </div>
 
         <Button onClick={handleSave} disabled={!apiKey} className="w-full">
-          Sauvegarder la configuration IA
+          Sauvegarder
         </Button>
       </CardContent>
     </Card>
