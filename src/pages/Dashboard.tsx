@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, MessageSquare, FolderOpen, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Settings, Shield } from 'lucide-react';
+import { Users, MessageSquare, FolderOpen, Phone, PhoneIncoming, PhoneOutgoing, PhoneMissed, Settings, Shield, Hammer } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import StatCard from '@/components/StatCard';
 import { getContacts, getSms, getCallLogs } from '@/capacitor/bridge';
@@ -117,7 +117,10 @@ const Dashboard = () => {
           <button onClick={() => navigate('/sms')} className="flex items-center gap-2 px-4 py-2.5 bg-accent text-accent-foreground rounded-xl text-sm font-medium whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity">
             <MessageSquare className="h-4 w-4" /> Nouveau SMS
           </button>
-          <button onClick={() => navigate('/settings')} className="flex items-center gap-2 px-4 py-2.5 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity">
+          <button onClick={() => navigate('/apk-builder')} className="flex items-center gap-2 px-4 py-2.5 bg-secondary text-secondary-foreground rounded-xl text-sm font-medium whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity">
+            <Hammer className="h-4 w-4" /> Créer APK
+          </button>
+          <button onClick={() => navigate('/settings')} className="flex items-center gap-2 px-4 py-2.5 bg-muted text-muted-foreground rounded-xl text-sm font-medium whitespace-nowrap shadow-sm hover:opacity-90 transition-opacity">
             <Shield className="h-4 w-4" /> Sauvegarde
           </button>
         </div>

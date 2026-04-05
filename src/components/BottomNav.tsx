@@ -1,11 +1,11 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, MessageSquare, FolderOpen, Phone } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Hammer, Phone, BookOpen } from 'lucide-react';
 
 const tabs = [
   { path: '/', label: 'Accueil', icon: LayoutDashboard },
   { path: '/contacts', label: 'Contacts', icon: Users },
   { path: '/sms', label: 'SMS', icon: MessageSquare },
-  { path: '/files', label: 'Fichiers', icon: FolderOpen },
+  { path: '/apk-builder', label: 'APK', icon: Hammer },
   { path: '/calls', label: 'Appels', icon: Phone },
 ];
 
