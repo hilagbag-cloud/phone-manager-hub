@@ -114,7 +114,7 @@ const AISettings = () => {
           </Button>
           {testResult !== null && (
             testResult
-              ? <span className="flex items-center text-sm text-green-600"><CheckCircle className="h-4 w-4 mr-1" /> Valide</span>
+              ? <span className="flex items-center text-sm text-primary"><CheckCircle className="h-4 w-4 mr-1" /> Valide</span>
               : <span className="flex items-center text-sm text-destructive"><XCircle className="h-4 w-4 mr-1" /> Invalide</span>
           )}
         </div>
