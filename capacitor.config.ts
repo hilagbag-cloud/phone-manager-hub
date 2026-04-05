@@ -14,7 +14,18 @@ const config: CapacitorConfig = {
       launchShowDuration: 2000,
       backgroundColor: "#ffffff",
       showSpinner: false,
-      androidScaleType: "CENTER_CROP"
+      androidScaleType: "CENTER_CROP",
+      iosScaleType: "CENTER_CROP",
+      splashFullScreen: true,
+      splashImmersive: true
+    },
+    StatusBar: {
+      style: 'LIGHT',
+      backgroundColor: '#ffffff',
+      overlaysWebView: false
+    },
+    SafeArea: {
+      offset: 0
     }
   }
 };
