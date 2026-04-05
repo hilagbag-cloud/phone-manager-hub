@@ -37,6 +37,7 @@ export interface BuildLog {
   timestamp: Date;
   message: string;
   type: 'info' | 'success' | 'error' | 'warning';
+  link?: string; // Clickable link to GitHub Actions or specific file
 }
 
 export type WizardStep = 0 | 1 | 2 | 3;
@@ -54,7 +55,7 @@ export interface AIConfig {
   provider: AIProvider;
   apiKey: string;
   model?: string;
-  baseUrl?: string; // For custom providers
+  baseUrl?: string;
   maxTokens?: number;
 }
 

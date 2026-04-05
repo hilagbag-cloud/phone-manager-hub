@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { WizardStep, RepoAnalysis, AppConfig, BuildLog, AIConfig } from '@/types/apk-builder';
+import { saveGitHubToken, saveAIConfig, saveAppConfig, saveLastRepo } from '@/lib/storage';
 
 interface ApkBuilderState {
   // Wizard
@@ -30,7 +31,7 @@ interface ApkBuilderState {
   isBuilding: boolean;
   setIsBuilding: (v: boolean) => void;
   logs: BuildLog[];
-  addLog: (msg: string, type?: BuildLog['type']) => void;
+  addLog: (msg: string, type?: BuildLog['type'], link?: string) => void;
   clearLogs: () => void;
   downloadUrl: string | null;
   setDownloadUrl: (u: string | null) => void;
@@ -53,13 +54,20 @@ export const useApkBuilderStore = create<ApkBuilderState>((set) => ({
   step: 0,
   setStep: (step) => set({ step }),
   repoUrl: '',
-  setRepoUrl: (repoUrl) => set({ repoUrl }),
+  setRepoUrl: (repoUrl) => {
+    set({ repoUrl });
+    saveLastRepo(repoUrl).catch(() => {});
+  },
   token: '',
   setToken: (token) => set({ token }),
   username: '',
   setUsername: (username) => set({ username }),
   appConfig: { ...initialAppConfig },
-  setAppConfig: (c) => set((s) => ({ appConfig: { ...s.appConfig, ...c } })),
+  setAppConfig: (c) => set((s) => {
+    const newConfig = { ...s.appConfig, ...c };
+    saveAppConfig(newConfig).catch(() => {});
+    return { appConfig: newConfig };
+  }),
   analysis: null,
   setAnalysis: (analysis) => set({ analysis }),
   isAnalyzing: false,
@@ -67,15 +75,18 @@ export const useApkBuilderStore = create<ApkBuilderState>((set) => ({
   isBuilding: false,
   setIsBuilding: (isBuilding) => set({ isBuilding }),
   logs: [],
-  addLog: (message, type = 'info') =>
-    set((s) => ({ logs: [...s.logs, { timestamp: new Date(), message, type }] })),
+  addLog: (message, type = 'info', link?: string) =>
+    set((s) => ({ logs: [...s.logs, { timestamp: new Date(), message, type, link }] })),
   clearLogs: () => set({ logs: [] }),
   downloadUrl: null,
   setDownloadUrl: (downloadUrl) => set({ downloadUrl }),
   aiConfig: null,
-  setAiConfig: (aiConfig) => set({ aiConfig }),
+  setAiConfig: (aiConfig) => {
+    set({ aiConfig });
+    if (aiConfig) saveAIConfig(aiConfig).catch(() => {});
+  },
   reset: () => set({
-    step: 0, repoUrl: '', token: '', username: '',
+    step: 0, repoUrl: '', 
     appConfig: { ...initialAppConfig },
     analysis: null, isAnalyzing: false, isBuilding: false,
     logs: [], downloadUrl: null,
