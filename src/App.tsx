@@ -15,6 +15,8 @@ const SmsPage = lazy(() => import("./pages/SmsPage"));
 const FilesPage = lazy(() => import("./pages/FilesPage"));
 const CallsPage = lazy(() => import("./pages/CallsPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const ApkBuilderPage = lazy(() => import("./pages/ApkBuilderPage"));
+const GuidePage = lazy(() => import("./pages/GuidePage"));
 
 const queryClient = new QueryClient();
 
@@ -46,6 +48,8 @@ const App = () => {
                 <Route path="/files" element={<FilesPage />} />
                 <Route path="/calls" element={<CallsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/apk-builder" element={<ApkBuilderPage />} />
+                <Route path="/guide" element={<GuidePage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
