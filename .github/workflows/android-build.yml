@@ -1,47 +1,23 @@
-name: Android APK Build
+# Android Build Workflow
+
+name: Android Build
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          node-version: '20'
-
-      - name: Install dependencies
+          node-version: '22'
+      - name: Install Dependencies
         run: npm install
-
-      - name: Build web assets
-        run: npm run build
-
-      - name: Add Android platform
-        run: npx cap add android
-
-      - name: Sync Capacitor
-        run: npx cap sync
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Build Android project
-        run: cd android && ./gradlew build
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Build APK
+        run: ./gradlew assembleDebug
