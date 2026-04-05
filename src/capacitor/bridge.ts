@@ -234,11 +234,12 @@ export async function getFiles(path?: string): Promise<FileEntry[]> {
         directory: (window as any).Capacitor.Filesystem.Directory.ExternalStorage,
       });
       return (result.files || []).map((f: any) => ({
+        id: f.name,
         name: f.name,
         path: `${path}/${f.name}`,
-        type: f.type === 'directory' ? 'folder' : 'file',
+        type: f.type === 'directory' ? 'directory' : 'file',
         size: f.size || 0,
-        modified: f.mtime ? new Date(f.mtime).toISOString() : new Date().toISOString(),
+        modifiedAt: f.mtime ? new Date(f.mtime).toISOString() : new Date().toISOString(),
       }));
     } catch (error) {
       console.error('Error fetching files:', error);
@@ -280,11 +281,12 @@ export async function createDirectory(path: string): Promise<void> {
   }
   
   demoFiles.push({
+    id: `dir_${Date.now()}`,
     name: path.split('/').pop() || 'Folder',
     path,
-    type: 'folder',
+    type: 'directory',
     size: 0,
-    modified: new Date().toISOString(),
+    modifiedAt: new Date().toISOString(),
   });
   console.log(`Created directory: ${path}`);
 }
