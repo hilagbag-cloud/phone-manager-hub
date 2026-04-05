@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Phone Manager Pro</string>
+    <string name="title_activity_main">Phone Manager Pro</string>
+    <string name="package_name">app.lovable.c577b79e68f04d0b9a68e82aa0f9f38c</string>
+    <string name="custom_url_scheme">app.lovable.c577b79e68f04d0b9a68e82aa0f9f38c</string>
+</resources>
