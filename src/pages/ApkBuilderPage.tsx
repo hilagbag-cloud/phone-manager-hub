@@ -5,6 +5,7 @@ import TokenInput from '@/components/apk-builder/TokenInput';
 import AppConfig from '@/components/apk-builder/AppConfig';
 import AnalysisReport from '@/components/apk-builder/AnalysisReport';
 import BuildLogs from '@/components/apk-builder/BuildLogs';
+import AIChat from '@/components/apk-builder/AIChat';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useApkBuilderStore } from '@/stores/apkBuilderStore';
@@ -89,6 +90,7 @@ const ApkBuilderPage = () => {
             )}
 
             <BuildLogs />
+            <AIChat />
           </div>
         )}
       </div>

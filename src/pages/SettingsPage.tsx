@@ -7,6 +7,7 @@ import { AppPermissions } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import AISettings from '@/components/apk-builder/AISettings';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -93,7 +94,8 @@ const SettingsPage = () => {
       />
 
       <div className="px-4 space-y-4 mt-2">
-        {/* Theme */}
+        {/* AI Settings */}
+        <AISettings />
         <div className="bg-card rounded-xl p-4 border border-border animate-fade-in">
           <h3 className="font-semibold text-card-foreground mb-3">Apparence</h3>
           <div className="flex items-center justify-between">
