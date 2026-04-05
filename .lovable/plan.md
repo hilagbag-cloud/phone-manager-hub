@@ -1,33 +1,49 @@
 
+## Plan: Refonte APK Builder - Persistance, Auto-Update & UX
 
-## Plan: Fix build error and create a working GitHub Actions workflow for APK download
+### 1. Persistance des données (Dexie/IndexedDB)
+- Stocker token GitHub, config IA, config app, historique de builds dans IndexedDB via Dexie
+- Restaurer automatiquement au lancement
+- Chiffrement léger du token (obfuscation base64 + préfixe)
 
-### Problem
-1. **Build error** in `src/capacitor/bridge.ts` line 285: `type: 'folder'` should be `type: 'directory'` (the `FileEntry` type only allows `'file' | 'directory'`).
-2. **GitHub Actions workflow** is broken -- it's missing the web build step, Java setup, Android platform setup, and the APK artifact upload.
+### 2. Sélection de repos GitHub via API
+- Remplacer le champ URL par un flow : entrer token → lister les repos (publics + privés) → sélectionner
+- Utiliser `octokit.repos.listForAuthenticatedUser()` avec pagination
+- Barre de recherche/filtre sur les repos
+- Auto-générer le package ID depuis owner/repo
 
-### Changes
+### 3. Modèles IA dynamiques
+- Interroger l'API du fournisseur pour lister les modèles disponibles (`/v1/models`)
+- Remplacer le champ texte par un Select avec les modèles récupérés
+- Fallback sur les modèles par défaut si l'API ne répond pas
 
-**1. Fix TypeScript error in `src/capacitor/bridge.ts`**
-- Line 285: change `type: 'folder'` to `type: 'directory'`
-- Also fix lines 286-287: `size` → `size` and `modified` → `modifiedAt` to match the `FileEntry` interface (which uses `modifiedAt`, not `modified`). Also add `id` field.
+### 4. Auto-update de l'APK
+- Configurer `capacitor.config.ts` avec `server.url` pointant vers l'URL de production
+- L'APK charge toujours la dernière version publiée depuis `https://phone-central-hub.lovable.app/`
+- Pas besoin de re-télécharger l'APK pour chaque mise à jour
 
-**2. Rewrite `.github/workflows/android-build.yml`**
-A complete workflow that:
-- Checks out code
-- Sets up Node.js 22 and Java 21
-- Installs npm dependencies
-- Builds the web app (`npm run build`)
-- Adds Android platform (`npx cap add android`)
-- Syncs Capacitor (`npx cap sync`)
-- Builds the debug APK (`cd android && ./gradlew assembleDebug`)
-- Uploads the APK as a downloadable artifact
+### 5. Logs détaillés et gestion d'erreurs
+- Enrichir les logs avec des liens cliquables vers GitHub Actions
+- Afficher les erreurs de manière structurée avec bouton "Corriger" qui redirige vers la section appropriée
+- Catégoriser les erreurs (token, repo, build, workflow)
 
-After pushing to GitHub, you'll be able to download the APK from the **Actions** tab → click the latest workflow run → scroll to **Artifacts** → download `android-debug-apk`.
+### 6. Permissions token GitHub
+- Guider l'utilisateur pour créer un token avec les scopes nécessaires : `repo`, `workflow`, `read:org`
+- Valider les scopes du token via l'API et afficher les permissions manquantes
+- Lien direct vers la page de création de token avec les bons scopes pré-cochés
 
-### Technical details
+### 7. Centrer l'app sur APK Builder
+- Faire de la page APK Builder la page d'accueil
+- Simplifier la navigation
 
-The workflow will use `actions/upload-artifact@v4` to make the APK available for download at `android/app/build/outputs/apk/debug/app-debug.apk`.
-
-Also need to scan `bridge.ts` for other mismatches with the `FileEntry` interface (`id`, `modifiedAt` fields) since the bridge uses different property names than the type definition.
-
+### Fichiers à modifier/créer
+- `src/lib/storage.ts` (nouveau - persistance Dexie)
+- `src/lib/aiClient.ts` (ajouter fetch modèles)
+- `src/stores/apkBuilderStore.ts` (persistance)
+- `src/components/apk-builder/RepoSelector.tsx` (nouveau - sélection repos)
+- `src/components/apk-builder/AISettings.tsx` (modèles dynamiques)
+- `src/components/apk-builder/TokenInput.tsx` (validation scopes)
+- `src/components/apk-builder/BuildLogs.tsx` (logs enrichis)
+- `src/pages/ApkBuilderPage.tsx` (refonte étapes)
+- `src/App.tsx` (route par défaut)
+- `capacitor.config.ts` (auto-update)
