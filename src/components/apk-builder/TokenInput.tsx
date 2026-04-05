@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Key, Shield } from 'lucide-react';
+import { ExternalLink, Key, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useApkBuilderStore } from '@/stores/apkBuilderStore';
 import { useGitHubApi } from '@/hooks/useGitHubApi';
 import { LINKS } from '@/lib/links';
+import { clearGitHubToken } from '@/lib/storage';
+import { toast } from 'sonner';
+
+const REQUIRED_SCOPES = ['repo', 'workflow', 'read:org', 'read:user'];
 
 const TokenInput = () => {
-  const { username, setStep } = useApkBuilderStore();
+  const { username, setStep, token, setToken, setUsername } = useApkBuilderStore();
   const { connectToken } = useGitHubApi();
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,27 +21,48 @@ const TokenInput = () => {
     setLoading(true);
     const ok = await connectToken(value);
     setLoading(false);
-    if (ok) setStep(2);
+    if (ok) setStep(0); // Go to repo selection (step 0 now shows repos)
   };
 
-  if (username) {
+  const handleDisconnect = async () => {
+    setToken('');
+    setUsername('');
+    await clearGitHubToken();
+    toast.info('Déconnecté de GitHub');
+  };
+
+  if (username && token) {
     return (
       <Card>
-        <CardContent className="pt-6 text-center space-y-3">
-          <Shield className="h-8 w-8 text-primary mx-auto" />
-          <p className="font-medium">Connecté en tant que <span className="text-primary">@{username}</span></p>
-          <Button onClick={() => setStep(2)} className="w-full">Continuer</Button>
+        <CardContent className="pt-6 space-y-4">
+          <div className="text-center space-y-2">
+            <Shield className="h-8 w-8 text-primary mx-auto" />
+            <p className="font-medium">Connecté en tant que <span className="text-primary">@{username}</span></p>
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+              <CheckCircle className="h-3 w-3 text-green-500" />
+              Token sauvegardé localement
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => setStep(0)} className="flex-1">Continuer</Button>
+            <Button variant="outline" onClick={handleDisconnect} className="text-xs">
+              Déconnecter
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
+  // Token creation URL with all required scopes
+  const tokenUrl = `https://github.com/settings/tokens/new?scopes=${REQUIRED_SCOPES.join(',')}&description=APK%20Builder%20Universal`;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Étape 2 : Token GitHub</CardTitle>
+        <CardTitle className="text-lg">Connexion GitHub</CardTitle>
         <CardDescription>
-          Un token permet à l'application d'agir sur votre dépôt (ajouter des fichiers, lancer la compilation).
+          Un token d'accès personnel permet à l'application d'accéder à vos dépôts et lancer des builds.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -53,20 +78,32 @@ const TokenInput = () => {
           <p className="font-medium flex items-center gap-1"><Key className="h-3 w-3" /> Comment obtenir un token :</p>
           <ol className="list-decimal pl-4 space-y-1">
             <li>
-              <a href={LINKS.githubTokenNew} target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                Ouvrir la page de création de token <ExternalLink className="h-3 w-3 inline" />
+              <a href={tokenUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                Créer un token avec les bons scopes <ExternalLink className="h-3 w-3 inline" />
               </a>
             </li>
-            <li>Cochez les droits : <code className="bg-background px-1 rounded">repo</code> et <code className="bg-background px-1 rounded">workflow</code></li>
+            <li>Vérifiez que ces permissions sont cochées :</li>
+          </ol>
+          <div className="flex flex-wrap gap-1 pl-4">
+            {REQUIRED_SCOPES.map(scope => (
+              <code key={scope} className="bg-background px-1.5 py-0.5 rounded text-[10px]">{scope}</code>
+            ))}
+          </div>
+          <ol className="list-decimal pl-4 space-y-1" start={3}>
             <li>Cliquez sur « Generate token » puis copiez-le ici</li>
           </ol>
-          <p className="text-muted-foreground mt-2">
-            🔒 Votre token reste dans votre navigateur et n'est jamais envoyé à un serveur.
-          </p>
+          
+          <div className="flex items-start gap-1.5 mt-2 p-2 bg-background rounded border border-border">
+            <AlertTriangle className="h-3 w-3 text-yellow-500 shrink-0 mt-0.5" />
+            <p className="text-muted-foreground">
+              Le scope <code className="bg-muted px-1 rounded">repo</code> est indispensable pour les dépôts privés.
+              Le token est stocké uniquement dans votre navigateur (IndexedDB).
+            </p>
+          </div>
         </div>
 
         <Button disabled={!value || loading} onClick={handleConnect} className="w-full">
-          {loading ? 'Vérification...' : 'Vérifier et continuer'}
+          {loading ? 'Vérification...' : 'Connecter'}
         </Button>
       </CardContent>
     </Card>
