@@ -1,12 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, MessageSquare, Hammer, Phone, BookOpen } from 'lucide-react';
+import { Hammer, Users, MessageSquare, Phone, Settings } from 'lucide-react';
 
 const tabs = [
-  { path: '/', label: 'Accueil', icon: LayoutDashboard },
+  { path: '/', label: 'APK', icon: Hammer },
   { path: '/contacts', label: 'Contacts', icon: Users },
   { path: '/sms', label: 'SMS', icon: MessageSquare },
-  { path: '/apk-builder', label: 'APK', icon: Hammer },
   { path: '/calls', label: 'Appels', icon: Phone },
+  { path: '/settings', label: 'Réglages', icon: Settings },
 ];
 
 const BottomNav = () => {
