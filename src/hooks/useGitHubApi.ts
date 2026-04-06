@@ -5,6 +5,7 @@ import { analyzeRepo } from '@/lib/repoAnalyzer';
 import { getFixActions, applyFixes } from '@/lib/autoFixer';
 import { saveGitHubToken } from '@/lib/storage';
 import { toast } from 'sonner';
+import { notificationService } from '@/lib/notifications';
 
 export function useGitHubApi() {
   const store = useApkBuilderStore();
@@ -71,6 +72,13 @@ export function useGitHubApi() {
       }
 
       store.addLog('✅ Analyse terminée', 'success');
+      
+      // Push notification for scan complete
+      const issueCount = Object.entries(analysis)
+        .filter(([k]) => k.startsWith('has'))
+        .filter(([, v]) => !v).length;
+      notificationService.scanComplete(`${owner}/${repo}`, issueCount);
+      
       return analysis;
     } catch (e: any) {
       const msg = e.message?.includes('404')
