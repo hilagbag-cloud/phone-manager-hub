@@ -7,6 +7,7 @@ import AnalysisReport from '@/components/apk-builder/AnalysisReport';
 import BuildLogs from '@/components/apk-builder/BuildLogs';
 import BuildHistory from '@/components/apk-builder/BuildHistory';
 import AIChat from '@/components/apk-builder/AIChat';
+import PuterAIChat from '@/components/apk-builder/PuterAIChat';
 import AISettings from '@/components/apk-builder/AISettings';
 import NotificationSettings from '@/components/apk-builder/NotificationSettings';
 import GitHubLogsViewer from '@/components/apk-builder/GitHubLogsViewer';
@@ -151,6 +152,19 @@ const ApkBuilderPage = () => {
 
             {/* Build History */}
             <BuildHistory />
+
+            {/* Puter AI Chat */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between text-sm">
+                  ⚡ Puter IA Agent (autonome)
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <PuterAIChat />
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* AI Chat */}
             <Collapsible>

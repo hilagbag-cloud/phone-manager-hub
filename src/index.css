@@ -58,3 +58,28 @@
     font-family: "Inter", system-ui, -apple-system, sans-serif;
   }
 }
+
+
+/* Hide Lovable badge and injected elements */
+[data-lovable-badge],
+[class*="lovable-badge"],
+[class*="edit-with"],
+[class*="Lovable"],
+iframe[src*="lovable"],
+a[href*="lovable.dev"][style*="position: fixed"],
+a[style*="position: fixed"][style*="bottom"],
+div[style*="position: fixed"][style*="bottom"],
+.lovable-badge,
+.edit-with-lovable {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Additional selectors for common badge patterns */
+[style*="position: fixed"][style*="right"][style*="bottom"],
+[style*="z-index: 999"],
+[style*="z-index: 9999"],
+[style*="z-index: 99999"] {
+  display: none !important;
+}
