@@ -7,6 +7,7 @@ import AnalysisReport from '@/components/apk-builder/AnalysisReport';
 import BuildLogs from '@/components/apk-builder/BuildLogs';
 import AIChat from '@/components/apk-builder/AIChat';
 import AISettings from '@/components/apk-builder/AISettings';
+import NotificationSettings from '@/components/apk-builder/NotificationSettings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -54,8 +55,9 @@ const ApkBuilderPage = () => {
 
         {/* AI Settings collapsible */}
         {showAiSettings && (
-          <div className="mb-4">
+          <div className="mb-4 space-y-3">
             <AISettings />
+            <NotificationSettings />
           </div>
         )}
 
