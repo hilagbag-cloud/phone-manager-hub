@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,11 @@ const SYSTEM_PROMPT = `Tu es un assistant expert en développement d'application
 Tu aides les utilisateurs à transformer leurs PWA en APK Android via Capacitor et GitHub Actions.
 Tu peux analyser les logs d'erreur, suggérer des corrections de code, et expliquer les étapes.
 Réponds toujours en français, de manière claire et concise.`;
+
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 const AIChat = () => {
   const { aiConfig, logs, repoUrl, analysis } = useApkBuilderStore();
