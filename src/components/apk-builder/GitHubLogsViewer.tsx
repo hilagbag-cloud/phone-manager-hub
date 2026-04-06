@@ -137,7 +137,7 @@ const GitHubLogsViewer = () => {
                         {loadingJob === job.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Voir les logs'}
                       </Button>
                       {jobLogs[job.id] && (
-                        <ScrollArea className="mt-2 h-40 rounded bg-[hsl(220,20%,8%)] p-2">
+                        <ScrollArea className="mt-2 h-40 rounded bg-muted p-2">
                           <pre className="text-[10px] text-gray-300 whitespace-pre-wrap font-mono">
                             {jobLogs[job.id]}
                           </pre>
