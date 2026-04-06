@@ -5,9 +5,11 @@ import TokenInput from '@/components/apk-builder/TokenInput';
 import AppConfig from '@/components/apk-builder/AppConfig';
 import AnalysisReport from '@/components/apk-builder/AnalysisReport';
 import BuildLogs from '@/components/apk-builder/BuildLogs';
+import BuildHistory from '@/components/apk-builder/BuildHistory';
 import AIChat from '@/components/apk-builder/AIChat';
 import AISettings from '@/components/apk-builder/AISettings';
 import NotificationSettings from '@/components/apk-builder/NotificationSettings';
+import GitHubLogsViewer from '@/components/apk-builder/GitHubLogsViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -32,10 +34,7 @@ const ApkBuilderPage = () => {
     await fixAndBuild();
   };
 
-  // Error logs for quick action
   const hasErrors = logs.some(l => l.type === 'error');
-
-  // Determine effective step: if no token, force token step
   const effectiveStep = !token && step !== 1 ? 1 : step;
 
   return (
@@ -53,7 +52,6 @@ const ApkBuilderPage = () => {
       <div className="px-4">
         <StepIndicator current={effectiveStep} onStepClick={setStep} />
 
-        {/* AI Settings collapsible */}
         {showAiSettings && (
           <div className="mb-4 space-y-3">
             <AISettings />
@@ -61,16 +59,10 @@ const ApkBuilderPage = () => {
           </div>
         )}
 
-        {/* Token step (step 1) - shown first if no token */}
         {effectiveStep === 1 && <TokenInput />}
-
-        {/* Repo selection (step 0) - uses GitHub API to list repos */}
         {effectiveStep === 0 && <RepoSelector />}
-
-        {/* App config (step 2) */}
         {effectiveStep === 2 && <AppConfig />}
 
-        {/* Build step (step 3) */}
         {effectiveStep === 3 && (
           <div className="space-y-4">
             {!analysis && !isAnalyzing && (
@@ -89,7 +81,6 @@ const ApkBuilderPage = () => {
 
             {analysis && <AnalysisReport analysis={analysis} />}
 
-            {/* Error banner with redirect */}
             {hasErrors && !isBuilding && (
               <Card className="border-destructive bg-destructive/5">
                 <CardContent className="pt-4 flex items-start gap-3">
@@ -137,7 +128,7 @@ const ApkBuilderPage = () => {
                     </Button>
                   </a>
                   <p className="text-xs text-muted-foreground">
-                    Redirigé vers GitHub Actions pour télécharger l'artefact.
+                    L'APK se met à jour automatiquement grâce à la configuration server.url dans Capacitor.
                   </p>
                 </CardContent>
               </Card>
@@ -145,11 +136,27 @@ const ApkBuilderPage = () => {
 
             <BuildLogs />
 
-            {/* AI Chat collapsible */}
+            {/* GitHub Actions Logs Viewer */}
             <Collapsible>
               <CollapsibleTrigger asChild>
                 <Button variant="outline" className="w-full justify-between text-sm">
-                  🤖 Assistant IA
+                  📋 Logs GitHub Actions
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <GitHubLogsViewer />
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Build History */}
+            <BuildHistory />
+
+            {/* AI Chat */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between text-sm">
+                  🤖 Assistant IA (analyse complète)
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </CollapsibleTrigger>
