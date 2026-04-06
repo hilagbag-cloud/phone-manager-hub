@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useApkBuilderStore } from '@/stores/apkBuilderStore';
 import { parseRepoUrl, getLatestRun, getRunArtifacts } from '@/lib/githubClient';
+import { notificationService } from '@/lib/notifications';
 
 export function useBuildPolling() {
   const { isBuilding, repoUrl, addLog, setIsBuilding, setDownloadUrl, token } = useApkBuilderStore();
@@ -37,9 +38,13 @@ export function useBuildPolling() {
             } else {
               addLog('Aucun artefact APK trouvé.', 'warning');
             }
+            // Push notification
+            notificationService.buildComplete(repo);
           } else {
             addLog(`❌ La compilation a échoué (${run.conclusion})`, 'error');
             addLog(`Voir les logs : https://github.com/${parseRepoUrl(repoUrl).owner}/${parseRepoUrl(repoUrl).repo}/actions/runs/${run.id}`, 'error');
+            // Push notification
+            notificationService.buildFailed(repo, `Conclusion: ${run.conclusion}`);
           }
           setIsBuilding(false);
           if (intervalRef.current) clearInterval(intervalRef.current);
