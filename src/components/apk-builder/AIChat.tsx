@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useApkBuilderStore } from '@/stores/apkBuilderStore';
 import { chatCompletion } from '@/lib/aiClient';
-import { Bot, Send, Loader2, AlertCircle } from 'lucide-react';
+import { aiFullAnalysis, aiFixFile } from '@/lib/aiRepoAnalyzer';
+import { parseRepoUrl } from '@/lib/githubClient';
+import { Bot, Send, Loader2, AlertCircle, Search, Wrench } from 'lucide-react';
 import type { AIMessage } from '@/types/apk-builder';
 
 const SYSTEM_PROMPT = `Tu es un assistant expert en développement d'applications web et mobiles.
@@ -14,10 +16,11 @@ Tu peux analyser les logs d'erreur, suggérer des corrections de code, et expliq
 Réponds toujours en français, de manière claire et concise.`;
 
 const AIChat = () => {
-  const { aiConfig, logs } = useApkBuilderStore();
+  const { aiConfig, logs, repoUrl, analysis } = useApkBuilderStore();
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,7 +47,6 @@ const AIChat = () => {
     setLoading(true);
 
     try {
-      // Include build logs context if available
       const logsContext = logs.length > 0
         ? `\n\nLogs de build récents:\n${logs.slice(-20).map(l => `[${l.type}] ${l.message}`).join('\n')}`
         : '';
@@ -57,13 +59,27 @@ const AIChat = () => {
       const reply = await chatCompletion(aiConfig, allMessages);
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (e: any) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `❌ Erreur: ${e.message}`,
-      }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `❌ Erreur: ${e.message}` }]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFullAnalysis = async () => {
+    if (!repoUrl || !analysis) return;
+    setLoadingAction('analysis');
+    setMessages(prev => [...prev, { role: 'user', content: '🔍 Analyse complète du dépôt (code + workflows + logs)...' }]);
+    try {
+      const { owner, repo } = parseRepoUrl(repoUrl);
+      const result = await aiFullAnalysis(
+        aiConfig, owner, repo, analysis.defaultBranch,
+        'Analyse complètement ce dépôt. Identifie tous les problèmes pour la génération APK: fichiers manquants, erreurs de config, problèmes de workflow GitHub Actions. Propose des corrections précises.'
+      );
+      setMessages(prev => [...prev, { role: 'assistant', content: result }]);
+    } catch (e: any) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `❌ ${e.message}` }]);
+    }
+    setLoadingAction(null);
   };
 
   const handleAnalyzeErrors = async () => {
@@ -75,8 +91,41 @@ const AIChat = () => {
       ]);
       return;
     }
-    setInput(`Analyse ces erreurs de build et propose des solutions:\n\n${errorLogs}`);
+    
+    if (repoUrl && analysis) {
+      setLoadingAction('errors');
+      setMessages(prev => [...prev, { role: 'user', content: '🔧 Analyse des erreurs avec contexte complet du repo...' }]);
+      try {
+        const { owner, repo } = parseRepoUrl(repoUrl);
+        const result = await aiFullAnalysis(
+          aiConfig, owner, repo, analysis.defaultBranch,
+          `Analyse ces erreurs de build et propose des corrections précises:\n\n${errorLogs}`
+        );
+        setMessages(prev => [...prev, { role: 'assistant', content: result }]);
+      } catch (e: any) {
+        setMessages(prev => [...prev, { role: 'assistant', content: `❌ ${e.message}` }]);
+      }
+      setLoadingAction(null);
+    } else {
+      setInput(`Analyse ces erreurs de build et propose des solutions:\n\n${errorLogs}`);
+    }
   };
+
+  const handleAutoFix = async (filePath: string, error: string) => {
+    if (!repoUrl || !analysis) return;
+    setLoadingAction('fix');
+    setMessages(prev => [...prev, { role: 'user', content: `🔧 Auto-correction de ${filePath}...` }]);
+    try {
+      const { owner, repo } = parseRepoUrl(repoUrl);
+      const result = await aiFixFile(aiConfig, owner, repo, analysis.defaultBranch, filePath, error);
+      setMessages(prev => [...prev, { role: 'assistant', content: result.message }]);
+    } catch (e: any) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `❌ ${e.message}` }]);
+    }
+    setLoadingAction(null);
+  };
+
+  const isLoading = loading || !!loadingAction;
 
   return (
     <Card>
@@ -89,7 +138,7 @@ const AIChat = () => {
         <ScrollArea className="h-64 rounded-md border bg-muted/30 p-3" ref={scrollRef}>
           {messages.length === 0 && (
             <p className="text-xs text-muted-foreground text-center py-8">
-              Posez une question ou demandez d'analyser les erreurs de build.
+              Posez une question ou lancez une analyse complète du dépôt.
             </p>
           )}
           {messages.filter(m => m.role !== 'system').map((m, i) => (
@@ -103,18 +152,29 @@ const AIChat = () => {
               </div>
             </div>
           ))}
-          {loading && (
+          {isLoading && (
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> Réflexion...
+              <Loader2 className="h-4 w-4 animate-spin" />
+              {loadingAction === 'analysis' ? 'Lecture du dépôt complet...' :
+               loadingAction === 'errors' ? 'Analyse des erreurs...' :
+               loadingAction === 'fix' ? 'Correction en cours...' : 'Réflexion...'}
             </div>
           )}
         </ScrollArea>
 
-        {logs.some(l => l.type === 'error') && (
-          <Button variant="outline" size="sm" onClick={handleAnalyzeErrors} className="w-full text-xs">
-            🔍 Analyser les erreurs de build
-          </Button>
-        )}
+        {/* Quick action buttons */}
+        <div className="flex flex-wrap gap-1.5">
+          {repoUrl && analysis && (
+            <Button variant="outline" size="sm" onClick={handleFullAnalysis} disabled={isLoading} className="text-[11px] h-7">
+              <Search className="h-3 w-3 mr-1" /> Analyse complète
+            </Button>
+          )}
+          {logs.some(l => l.type === 'error') && (
+            <Button variant="outline" size="sm" onClick={handleAnalyzeErrors} disabled={isLoading} className="text-[11px] h-7">
+              <Wrench className="h-3 w-3 mr-1" /> Analyser erreurs
+            </Button>
+          )}
+        </div>
 
         <div className="flex gap-2">
           <Input
@@ -122,10 +182,10 @@ const AIChat = () => {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            disabled={loading}
+            disabled={isLoading}
             className="text-sm"
           />
-          <Button size="icon" onClick={handleSend} disabled={!input.trim() || loading}>
+          <Button size="icon" onClick={handleSend} disabled={!input.trim() || isLoading}>
             <Send className="h-4 w-4" />
           </Button>
         </div>

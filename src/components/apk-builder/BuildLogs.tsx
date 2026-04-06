@@ -14,7 +14,7 @@ const BuildLogs = () => {
   if (logs.length === 0) return null;
 
   return (
-    <div className="rounded-lg border border-border bg-[hsl(220,20%,8%)] p-3 mt-4">
+    <div className="rounded-lg border border-border bg-muted p-3 mt-4">
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-semibold text-muted-foreground">Logs ({logs.length})</p>
       </div>

@@ -2,9 +2,10 @@ import { useEffect, useRef } from 'react';
 import { useApkBuilderStore } from '@/stores/apkBuilderStore';
 import { parseRepoUrl, getLatestRun, getRunArtifacts } from '@/lib/githubClient';
 import { notificationService } from '@/lib/notifications';
+import { addBuildHistory } from '@/lib/storage';
 
 export function useBuildPolling() {
-  const { isBuilding, repoUrl, addLog, setIsBuilding, setDownloadUrl, token } = useApkBuilderStore();
+  const { isBuilding, repoUrl, appConfig, addLog, setIsBuilding, setDownloadUrl, token } = useApkBuilderStore();
   const startTimeRef = useRef<Date | null>(null);
   const intervalRef = useRef<number | null>(null);
 
@@ -31,19 +32,36 @@ export function useBuildPolling() {
             addLog('✅ Compilation réussie !', 'success');
             const artifacts = await getRunArtifacts(owner, repo, run.id);
             const apk = artifacts.find(a => a.name.includes('apk'));
+            const url = `https://github.com/${owner}/${repo}/actions/runs/${run.id}`;
+            
             if (apk) {
-              const url = `https://github.com/${owner}/${repo}/actions/runs/${run.id}`;
               setDownloadUrl(url);
-              addLog(`APK disponible ! Rendez-vous sur GitHub pour télécharger.`, 'success');
+              addLog('APK disponible ! Rendez-vous sur GitHub pour télécharger.', 'success');
             } else {
               addLog('Aucun artefact APK trouvé.', 'warning');
             }
-            // Push notification
+
+            // Save to build history
+            await addBuildHistory({
+              repoUrl, repoOwner: owner, repoName: repo,
+              appName: appConfig.appName, appId: appConfig.appId,
+              status: 'success', timestamp: new Date(),
+              downloadUrl: url,
+            });
+
             notificationService.buildComplete(repo);
           } else {
             addLog(`❌ La compilation a échoué (${run.conclusion})`, 'error');
-            addLog(`Voir les logs : https://github.com/${parseRepoUrl(repoUrl).owner}/${parseRepoUrl(repoUrl).repo}/actions/runs/${run.id}`, 'error');
-            // Push notification
+            const url = `https://github.com/${owner}/${repo}/actions/runs/${run.id}`;
+            addLog(`Voir les logs : ${url}`, 'error');
+            
+            await addBuildHistory({
+              repoUrl, repoOwner: owner, repoName: repo,
+              appName: appConfig.appName, appId: appConfig.appId,
+              status: 'error', timestamp: new Date(),
+              errorMessage: `Build failed: ${run.conclusion}`,
+            });
+
             notificationService.buildFailed(repo, `Conclusion: ${run.conclusion}`);
           }
           setIsBuilding(false);
@@ -58,7 +76,6 @@ export function useBuildPolling() {
     };
 
     intervalRef.current = window.setInterval(poll, 15000);
-    // First poll after 10s
     const timeout = window.setTimeout(poll, 10000);
 
     return () => {
